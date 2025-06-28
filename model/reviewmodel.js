@@ -2,33 +2,32 @@ const { DataTypes } = require("sequelize");
 
 const { sequelize } = require("../database/db");
 
-const UserModel = sequelize.define(
-  "User",
+const reviewmodel = sequelize.define(
+  "reviewmodel",
   {
-    UserID: {
+    ReviewID: {
       type: DataTypes.INTEGER,
-      autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
     },
-    Name: {
-      type: DataTypes.STRING,
+    Rating: {
+      type: DataTypes.TINYINT,
       allowNull: false,
     },
-    Email: {
+    Comment: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+      allowNull: true,
     },
-    Password: {
-      type: DataTypes.STRING,
+    CreatedDate: {
+      type: DataTypes.DATE,
       allowNull: false,
     },
   },
   {
-    tableName: "User",
+    tableName: "Review",
     freezeTableName: true,
     timestamps: false,
   }
 );
 
-module.exports = UserModel;
+module.exports = reviewmodel;

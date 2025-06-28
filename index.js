@@ -3,6 +3,14 @@ const app = express();
 const routes = require("./routes/UserRoutes");
 const PORT = process.env.PORT || 8000;
 const { connectDB, sequelize } = require("./database/db");
+const {
+  user,
+  role,
+  service,
+  servicename,
+  servicedescription,
+  expert,
+} = require("./model/indexmodel");
 
 app.use(express.json());
 app.use("/user", routes);
@@ -12,11 +20,10 @@ app.get("/check", (req, res) => {
 });
 
 const startServer = async () => {
-  await connectDB();
   await sequelize.sync();
   app.listen(PORT, () => {
     console.log(` Server is running on  http://localhost:${PORT}`);
   });
 };
-  
+
 startServer();
