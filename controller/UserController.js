@@ -1,12 +1,13 @@
 const User = require("../model/usermodel");
 require("dotenv").config();
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // For signup
 const createuser = async (req, res) => {
   console.log(req.body);
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     if (!name || !email || !password) {
       return res.json({ success: false, message: "Please enter all fields" });
     }
@@ -16,6 +17,7 @@ const createuser = async (req, res) => {
       name: name,
       email: email,
       password: newpassword,
+      role: role,
     });
     return res.status(201).json({ success: "User created", users: newUser });
   } catch (error) {
@@ -36,9 +38,15 @@ const loginpage = async (req, res) => {
     if (!isMatch) {
       res.status(401).json({ success: false, message: "Invalid credential" });
     }
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_TOKEN,
+      { expiresIn: "24h" }
+    );
     res.status(200).json({
       success: true,
       messsage: "Login successful",
+      token,
       user: {
         id: user.id,
         username: user.name,
@@ -50,14 +58,25 @@ const loginpage = async (req, res) => {
   }
 };
 
-
 //get users
 const getallusers = async (req, res) => {
   try {
-    const users = await User.findAll({ attributes: { exclude: ["password"] } });
+    const users = await User.findAll({
+      attributes: { exclude: ["password"] },
+    });
     res.json({ success: true, users: users });
   } catch (error) {
     res.status(500).json({ error: "Error fetching users" });
+  }
+};
+
+const getuser = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await User.findByPk(userId);
+    res.json({ success: true, user: user });
+  } catch (error) {
+    res.status(500).json({ error: error });
   }
 };
 
@@ -66,4 +85,4 @@ const mainpage = (req, res) => {
   res.send("This is the main page");
 };
 
-module.exports = { createuser, mainpage, loginpage, getallusers };
+module.exports = { createuser, mainpage, loginpage, getallusers, getuser };
