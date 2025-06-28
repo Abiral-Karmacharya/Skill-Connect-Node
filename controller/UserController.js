@@ -14,7 +14,7 @@ const createuser = async (req, res) => {
 
     const foundRole = await Role.findOne({ where: { Role: role } });
     if (!foundRole) {
-      res.status(400).json({ success: false, message: "Invalid role" });
+      return res.status(400).json({ success: false, message: "Invalid role" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -39,11 +39,15 @@ const loginpage = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { Email: email } });
     if (!user) {
-      res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     const isMatch = await bcrypt.compare(password, user.Password);
     if (!isMatch) {
-      res.status(401).json({ success: false, message: "Invalid credential" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credential" });
     }
     const token = jwt.sign(
       { id: user.UserID, email: user.Email, role: user.Role },
@@ -51,9 +55,9 @@ const loginpage = async (req, res) => {
       { expiresIn: "24h" }
     );
     console.log(User.UserID);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      messsage: "Login successful",
+      message: "Login successful",
       token,
       user: {
         id: user.UserID,
@@ -62,7 +66,7 @@ const loginpage = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).json({ error: error });
+    return res.status(400).json({ error: error });
   }
 };
 
