@@ -1,8 +1,8 @@
-const User = require("../model/usermodel");
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const User = require("../model/usermodel");
+const Role = require("../model/rolemodel");
 // For signup
 const createuser = async (req, res) => {
   console.log(req.body);
@@ -11,13 +11,20 @@ const createuser = async (req, res) => {
     if (!name || !email || !password) {
       return res.json({ success: false, message: "Please enter all fields" });
     }
+
+    const foundRole = await Role.findOne({ where: { Role: role } });
+    if (!foundRole) {
+      res.status(400).json({ success: false, message: "Invalid role" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const newpassword = await bcrypt.hash(password, salt);
+
     const newUser = await User.create({
-      name: name,
-      email: email,
-      password: newpassword,
-      role: role,
+      Name: name,
+      Email: email,
+      Password: newpassword,
+      RoleID: foundRole.RoleID,
     });
     return res.status(201).json({ success: "User created", users: newUser });
   } catch (error) {
