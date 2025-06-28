@@ -37,27 +37,28 @@ const loginpage = async (req, res) => {
   console.log(req.body);
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { Email: email } });
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.Password);
     if (!isMatch) {
       res.status(401).json({ success: false, message: "Invalid credential" });
     }
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.UserID, email: user.Email, role: user.Role },
       process.env.JWT_TOKEN,
       { expiresIn: "24h" }
     );
+    console.log(User.UserID);
     res.status(200).json({
       success: true,
       messsage: "Login successful",
       token,
       user: {
-        id: user.id,
-        username: user.name,
-        email: user.email,
+        id: user.UserID,
+        username: user.Name,
+        email: user.Email,
       },
     });
   } catch (error) {
