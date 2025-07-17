@@ -92,9 +92,83 @@ const getuser = async (req, res) => {
   }
 };
 
+// Update user
+const updateuser = async (req, res) => {
+  const userId = req.params.id;
+  console.log(req.body);
+  
+  try {
+    const { name, email, password, role } = req.body;
+    
+    // Check if user exists
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    
+    // Update name if provided
+    if (name) {
+      updateData.Name = name;
+    }
+    
+    // Update email if provided
+    if (email) {
+      // Check if email is already taken by another user
+      const existingUser = await User.findOne({ 
+        where: { Email: email, UserID: { [require('sequelize').Op.ne]: userId } } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: "Email already exists" });
+      }
+      updateData.Email = email;
+    }
+    
+    // Update password if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.Password = await bcrypt.hash(password, salt);
+    }
+    
+    // Update role if provided
+    if (role) {
+      const foundRole = await Role.findOne({ where: { Role: role } });
+      if (!foundRole) {
+        return res.status(400).json({ success: false, message: "Invalid role" });
+      }
+      updateData.RoleID = foundRole.RoleID;
+    }
+    
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: "No valid fields to update" });
+    }
+    
+    // Update the user
+    await User.update(updateData, { where: { UserID: userId } });
+    
+    // Fetch updated user (excluding password)
+    const updatedUser = await User.findByPk(userId, {
+      attributes: { exclude: ["Password"] }
+    });
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: "User updated successfully", 
+      user: updatedUser 
+    });
+    
+  } catch (error) {
+    console.error("Update user error:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 //Home page
 const mainpage = (req, res) => {
   res.send("This is the main page");
 };
 
-module.exports = { createuser, mainpage, loginpage, getallusers, getuser };
+module.exports = { createuser, mainpage, loginpage, getallusers, getuser, updateuser };
