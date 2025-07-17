@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/usermodel");
 const Role = require("../model/rolemodel");
+const expert = require("../model/expertmodel");
 // For signup
 const createuser = async (req, res) => {
   console.log(req.body);
@@ -28,13 +29,12 @@ const createuser = async (req, res) => {
     });
     return res.status(201).json({ success: "User created", users: newUser });
   } catch (error) {
-    return res.status(400).json({ error: error });
+    return res.status(400).json({ error: error });  
   }
 };
 
 //login page
 const loginpage = async (req, res) => {
-  console.log(req.body);
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { Email: email } });
@@ -92,9 +92,29 @@ const getuser = async (req, res) => {
   }
 };
 
+const getexpert = async (req, res) => {
+  try {
+    const experts = await User.findAll({
+      where: {
+        RoleID: 3,
+      },
+    });
+    return res.json(experts);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 //Home page
 const mainpage = (req, res) => {
   res.send("This is the main page");
 };
 
-module.exports = { createuser, mainpage, loginpage, getallusers, getuser };
+module.exports = {
+  createuser,
+  mainpage,
+  loginpage,
+  getallusers,
+  getuser,
+  getexpert,
+};

@@ -4,7 +4,8 @@
   "description": "Skill connect backend",
   "main": "index.js",
   "scripts": {
-    "test": "console.log(\"completed\")"
+    "test": "console.log(\"completed\")",
+    "start": "nodemon"
   },
   "author": "",
   "license": "ISC",
