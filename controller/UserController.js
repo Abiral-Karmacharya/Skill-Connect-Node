@@ -29,7 +29,7 @@ const createuser = async (req, res) => {
     });
     return res.status(201).json({ success: "User created", users: newUser });
   } catch (error) {
-    return res.status(400).json({ error: error });  
+    return res.status(400).json({ error: error });
   }
 };
 
@@ -82,13 +82,29 @@ const getallusers = async (req, res) => {
   }
 };
 
-const getuser = async (req, res) => {
+const getuser1 = async (req, res) => {
   const userId = req.params.id;
   try {
     const user = await User.findByPk(userId);
     res.json({ success: true, user: user });
   } catch (error) {
     res.status(500).json({ error: error });
+  }
+};
+
+const getuser = async (req, res) => {
+  try {
+    // The authenticateToken middleware should decode the JWT and add user info to req.user
+    const userId = req.user.id; // or req.user._id depending on your user model
+
+    // Fetch only the current user's data
+    const user_select = await User.findByPk(userId); // Exclude password
+    if (!user_select) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.json(user_select);
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

@@ -23,6 +23,18 @@ const UserModel = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    PhoneNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    Location: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    Bio: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: "User",
