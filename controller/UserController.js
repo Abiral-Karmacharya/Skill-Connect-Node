@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/usermodel");
 const Role = require("../model/rolemodel");
-const expert = require("../model/expertmodel");
+// const expert = require("../model/expertmodel");
 // For signup
 const createuser = async (req, res) => {
   console.log(req.body);
@@ -82,15 +82,15 @@ const getallusers = async (req, res) => {
   }
 };
 
-const getuser1 = async (req, res) => {
-  const userId = req.params.id;
-  try {
-    const user = await User.findByPk(userId);
-    res.json({ success: true, user: user });
-  } catch (error) {
-    res.status(500).json({ error: error });
-  }
-};
+// const getuser1 = async (req, res) => {
+//   const userId = req.params.id;
+//   try {
+//     const user = await User.findByPk(userId);
+//     res.json({ success: true, user: user });
+//   } catch (error) {
+//     res.status(500).json({ error: error });
+//   }
+// };
 
 const getuser = async (req, res) => {
   try {
@@ -108,7 +108,92 @@ const getuser = async (req, res) => {
   }
 };
 
-const getexpert = async (req, res) => {
+const updateuser = async (req, res) => {
+  console.log("hi");
+  try {
+    const userId = req.user.id; // Extracted from authguard middleware
+
+    const {
+      name,
+      email,
+      bio,
+      phone,
+      location,
+      skills,
+      role,
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Handle password update if both fields provided
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.Password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Incorrect current password" });
+      }
+
+      if (currentPassword === newPassword) {
+        return res.status(400).json({
+          message: "New password cannot be the same as current password",
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.Password = await bcrypt.hash(newPassword, salt);
+    }
+
+    // Update only changed fields
+    if (name && name !== user.Name) user.Name = name;
+    if (email && email !== user.Email) user.Email = email;
+    if (bio && bio !== user.Bio) user.Bio = bio;
+    if (phone && phone !== user.PhoneNumber) user.PhoneNumber = phone;
+    if (location && location !== user.Location) user.Location = location;
+    if (skills && skills !== user.Skills) user.Skills = skills;
+    if (role && role !== user.Role) user.Role = role;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        Name: user.Name,
+        Email: user.Email,
+        Role: user.Role,
+        Bio: user.Bio,
+        PhoneNumber: user.PhoneNumber,
+        Location: user.Location,
+        Skills: user.Skills,
+      },
+    });
+  } catch (error) {
+    console.error("Update failed:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const deleteuser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await user.destroy({
+      where: { UserID: userId },
+    });
+
+    return res.status(200).json({ message: "User deleted" });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getexperts = async (req, res) => {
   try {
     const experts = await User.findAll({
       where: {
@@ -132,5 +217,7 @@ module.exports = {
   loginpage,
   getallusers,
   getuser,
-  getexpert,
+  updateuser,
+  deleteuser,
+  getexperts
 };
