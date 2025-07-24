@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/usermodel");
 const Role = require("../model/rolemodel");
+const Expert = require("../model/expertmodel");
+const Service = require("../model/servicemodel");
 // const expert = require("../model/expertmodel");
 // For signup
 const createuser = async (req, res) => {
@@ -27,6 +29,12 @@ const createuser = async (req, res) => {
       Password: newpassword,
       RoleID: foundRole.RoleID,
     });
+    if (foundRole.RoleID == 3) {
+      const UserId = await User.findOne({ where: { Email: email } });
+      const expert = await Expert.create({
+        UserID: UserId.UserID,
+      });
+    }
     return res.status(201).json({ success: "User created", users: newUser });
   } catch (error) {
     return res.status(400).json({ error: error });
@@ -206,6 +214,143 @@ const getexperts = async (req, res) => {
   }
 };
 
+const getexpert = async (req, res) => {
+  try {
+    const expertId = req.params.id;
+    const expert = await User.findByPk(expertId);
+    return res.json(expert);
+  } catch (error) {
+    return res.status(500).json({ message: "server error" });
+  }
+};
+
+const service = async (req, res) => {
+  try {
+    const {
+      expertId,
+      projectTitle,
+      projectDescription,
+      budget,
+      deadline,
+      requirements,
+    } = req.body;
+
+    const expert = await Expert.findOne({
+      where: {
+        UserID: expertId,
+      },
+    });
+
+    const userExpertId = expert.ExpertID;
+    const userId = parseInt(req.user.id);
+    // userid = userExpertId
+    // expertid = expertId
+
+    const services = await Service.create({
+      Title: projectTitle,
+      Description: projectDescription,
+      Requirements: requirements,
+      Deadline: deadline,
+      Price: budget,
+      UserID: parseInt(userId),
+      ExpertID: parseInt(userExpertId),
+    });
+    if (services) {
+      return res.status(200).json({ message: "Service created" });
+    }
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+const getlogs = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const services = await Service.findAll({ where: { UserID: userId } });
+    const formattedServices = [];
+    for (const service of services) {
+      const expert = await Expert.findByPk(service.ExpertID);
+      const user = await User.findByPk(expert.UserID);
+      if (expert) {
+        formattedServices.push({
+          ServiceID: service.ServiceID,
+          Title: service.Title,
+          Description: service.Description,
+          Requirements: service.Requirements,
+          Deadline: service.Deadline,
+          Price: service.Price,
+          Expert: user.Name, // Include the expert's name
+        });
+      } else {
+        // If the user is not found, you can handle it as needed
+        formattedServices.push({
+          ServiceID: service.ServiceID,
+          Title: service.Title,
+          Description: service.Description,
+          Requirements: service.Requirements,
+          Deadline: service.Deadline,
+          Price: service.Price,
+          Expert: null, // Or handle it differently if needed
+        });
+      }
+    }
+
+    return res.json(formattedServices);
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+  // try {
+  //   const userId = req.user.id;
+
+  //   // Assuming you have a Booking/Log model that references Service and User
+  //   const services = await Service.findAll({
+  //     where: { UserID: userId }, // Adjust this condition as needed
+  //     include: [
+  //       {
+  //         model: User,
+  //         attributes: ["Name"], // Only fetch the Name attribute from the User model
+  //       },
+  //     ],
+  //   });
+
+  //   if (!services || services.length === 0) {
+  //     return res.status(404).json({ message: "No logs found" });
+  //   }
+
+  //   // Format the response to match your frontend expectations
+  //   const formattedLogs = services.map((log) => ({
+  //     id: log.id,
+  //     // status: log.status,
+  //     budget: log.budget,
+  //     deadline: log.deadline,
+  //     projectTitle: log.projectTitle,
+  //     projectDescription: log.projectDescription,
+  //     createdAt: log.createdAt,
+  //     service: log.service
+  //       ? {
+  //           ServiceID: log.service.ServiceID,
+  //           Title: log.service.Title,
+  //           Description: log.service.Description,
+  //         }
+  //       : null,
+  //     expert: log.expert
+  //       ? {
+  //           UserID: log.expert.UserID,
+  //           Name: log.expert.Name,
+  //           Bio: log.expert.Bio,
+  //         }
+  //       : null,
+  //   }));
+
+  //   return res.json(formattedLogs);
+  // } catch (error) {
+  //   console.error("Error fetching logs:", error);
+  //   return res
+  //     .status(500)
+  //     .json({ message: "Server error", error: error.message });
+  // }
+};
+
 //Home page
 const mainpage = (req, res) => {
   res.send("This is the main page");
@@ -219,5 +364,8 @@ module.exports = {
   getuser,
   updateuser,
   deleteuser,
-  getexperts
+  getexperts,
+  getexpert,
+  service,
+  getlogs,
 };
