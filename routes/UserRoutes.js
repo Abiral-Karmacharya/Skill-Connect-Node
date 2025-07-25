@@ -8,6 +8,11 @@ const {
   updateuser,
   deleteuser,
   getexperts,
+  getexpert,
+  getlogs,
+  service,
+  acceptService,
+  declineService,
 } = require("../controller/UserController");
 const authguard = require("../middleware/authGuard");
 const isadmin = require("../middleware/isAdmin");
@@ -20,4 +25,15 @@ router.get("/getuser", authguard, getuser); //route for getting id of one user
 router.put("/updateuser", authguard, updateuser); // route for updating user
 router.delete("/deleteuser", authguard, deleteuser); // route for deleting user
 router.get("/getexperts", getexperts);
+router.get("/getexpert/:id", getexpert);
+router.post("/service", authguard, service);
+router.get("/getlogs", authguard, getlogs);
+router.put("/acceptservice/:serviceId", authguard, acceptService);
+router.put("/declineservice/:serviceId", authguard, declineService);
+// // Expert actions
+// router.put("/service/:serviceId/accept", authguard, acceptService);
+// router.put("/service/:serviceId/decline", authguard, declineService);
+
+// // Client actions
+// router.put("/service/:serviceId/cancel", authguard, cancelService);
 module.exports = router;

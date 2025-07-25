@@ -264,91 +264,200 @@ const service = async (req, res) => {
 };
 
 const getlogs = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const services = await Service.findAll({ where: { UserID: userId } });
-    const formattedServices = [];
-    for (const service of services) {
-      const expert = await Expert.findByPk(service.ExpertID);
-      const user = await User.findByPk(expert.UserID);
-      if (expert) {
-        formattedServices.push({
-          ServiceID: service.ServiceID,
-          Title: service.Title,
-          Description: service.Description,
-          Requirements: service.Requirements,
-          Deadline: service.Deadline,
-          Price: service.Price,
-          Expert: user.Name, // Include the expert's name
-        });
-      } else {
-        // If the user is not found, you can handle it as needed
-        formattedServices.push({
-          ServiceID: service.ServiceID,
-          Title: service.Title,
-          Description: service.Description,
-          Requirements: service.Requirements,
-          Deadline: service.Deadline,
-          Price: service.Price,
-          Expert: null, // Or handle it differently if needed
-        });
-      }
-    }
-
-    return res.json(formattedServices);
-  } catch (error) {
-    return res.status(500).json({ message: "Server error" });
-  }
   // try {
   //   const userId = req.user.id;
+  //   const services = await Service.findAll({ where: { UserID: userId } });
+  //   const user = await User.findByPk(userId);
+  //   console.log(services);
+  //   const usertype = user.RoleID;
+  //   const formattedServices = [];
+  //   for (const service of services) {
+  //     const expert = await Expert.findByPk(service.ExpertID);
+  //     const user = await User.findByPk(expert.UserID);
 
-  //   // Assuming you have a Booking/Log model that references Service and User
-  //   const services = await Service.findAll({
-  //     where: { UserID: userId }, // Adjust this condition as needed
-  //     include: [
-  //       {
-  //         model: User,
-  //         attributes: ["Name"], // Only fetch the Name attribute from the User model
-  //       },
-  //     ],
-  //   });
-
-  //   if (!services || services.length === 0) {
-  //     return res.status(404).json({ message: "No logs found" });
+  //     if (expert) {
+  //       formattedServices.push({
+  //         ServiceID: service.ServiceID,
+  //         Title: service.Title,
+  //         Description: service.Description,
+  //         Requirements: service.Requirements,
+  //         Deadline: service.Deadline,
+  //         Price: service.Price,
+  //         status: service.Status,
+  //         createdAt: service.CreatedDate,
+  //         Name: user.Name, // Include the expert's name
+  //         userType: usertype === 3 ? "expert" : "user",
+  //       });
+  //     } else {
+  //       // If the user is not found, you can handle it as needed
+  //       formattedServices.push({
+  //         ServiceID: service.ServiceID,
+  //         Title: service.Title,
+  //         Description: service.Description,
+  //         Requirements: service.Requirements,
+  //         Deadline: service.Deadline,
+  //         Price: service.Price,
+  //         Name: null, // Or handle it differently if needed
+  //       });
+  //     }
   //   }
 
-  //   // Format the response to match your frontend expectations
-  //   const formattedLogs = services.map((log) => ({
-  //     id: log.id,
-  //     // status: log.status,
-  //     budget: log.budget,
-  //     deadline: log.deadline,
-  //     projectTitle: log.projectTitle,
-  //     projectDescription: log.projectDescription,
-  //     createdAt: log.createdAt,
-  //     service: log.service
-  //       ? {
-  //           ServiceID: log.service.ServiceID,
-  //           Title: log.service.Title,
-  //           Description: log.service.Description,
-  //         }
-  //       : null,
-  //     expert: log.expert
-  //       ? {
-  //           UserID: log.expert.UserID,
-  //           Name: log.expert.Name,
-  //           Bio: log.expert.Bio,
-  //         }
-  //       : null,
-  //   }));
-
-  //   return res.json(formattedLogs);
+  //   return res.json(formattedServices);
   // } catch (error) {
-  //   console.error("Error fetching logs:", error);
-  //   return res
-  //     .status(500)
-  //     .json({ message: "Server error", error: error.message });
+  //   return res.status(500).json({ message: "Server error" });
   // }
+
+  try {
+    const userId = req.user.id;
+    const currentUser = await User.findByPk(userId);
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userRoleID = currentUser.RoleID;
+    let services = [];
+    const formattedServices = [];
+
+    if (userRoleID === 3) {
+      // User is an EXPERT (RoleID = 3)
+      const expert = await Expert.findOne({ where: { UserID: userId } });
+
+      if (!expert) {
+        return res.status(404).json({ message: "Expert profile not found" });
+      }
+
+      services = await Service.findAll({
+        where: { ExpertID: expert.ExpertID },
+      });
+
+      for (const service of services) {
+        const client = await User.findByPk(service.UserID);
+
+        formattedServices.push({
+          ServiceID: service.ServiceID,
+          Title: service.Title,
+          Description: service.Description,
+          Requirements: service.Requirements,
+          Deadline: service.Deadline,
+          Price: service.Price,
+          status: service.Status,
+          createdAt: service.CreatedDate,
+          Name: client ? client.Name : "Unknown Client",
+          userType: "expert",
+        });
+      }
+    } else if (userRoleID === 2) {
+      // User is a CLIENT (RoleID = 2)
+      services = await Service.findAll({
+        where: { UserID: userId },
+      });
+
+      for (const service of services) {
+        const expert = await Expert.findByPk(service.ExpertID);
+        let expertUser = null;
+
+        if (expert) {
+          expertUser = await User.findByPk(expert.UserID);
+        }
+
+        formattedServices.push({
+          ServiceID: service.ServiceID,
+          Title: service.Title,
+          Description: service.Description,
+          Requirements: service.Requirements,
+          Deadline: service.Deadline,
+          Price: service.Price,
+          status: service.Status,
+          createdAt: service.CreatedDate,
+          Name: expertUser ? expertUser.Name : "Unassigned Expert",
+          userType: "client",
+        });
+      }
+    } else if (userRoleID === 1) {
+      // User is an ADMIN (RoleID = 1)
+      services = await Service.findAll();
+
+      for (const service of services) {
+        const expert = await Expert.findByPk(service.ExpertID);
+        const client = await User.findByPk(service.UserID);
+        let expertUser = null;
+
+        if (expert) {
+          expertUser = await User.findByPk(expert.UserID);
+        }
+
+        formattedServices.push({
+          ServiceID: service.ServiceID,
+          Title: service.Title,
+          Description: service.Description,
+          Requirements: service.Requirements,
+          Deadline: service.Deadline,
+          Price: service.Price,
+          status: service.Status,
+          createdAt: service.CreatedDate,
+          Name: client ? client.Name : "Unknown Client", // For consistency with existing frontend
+          ExpertName: expertUser ? expertUser.Name : "Unassigned Expert",
+          ClientName: client ? client.Name : "Unknown Client",
+          userType: "admin",
+        });
+      }
+    } else {
+      return res.status(403).json({ message: "Invalid user role" });
+    }
+
+    // Return just the array like before (compatible with existing frontend)
+    return res.json(formattedServices);
+  } catch (error) {
+    console.error("Error in getlogs:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+const acceptService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    console.log(serviceId);
+    const userId = req.user.id;
+
+    // Find the service and update status
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    // Update status to in-progress
+    await service.update({ Status: "in-progress" });
+
+    return res.status(200).json({ message: "Service accepted successfully" });
+  } catch (error) {
+    console.error("Error accepting service:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const declineService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    // Update status to declined
+    const updateData = { Status: "declined" };
+
+    await service.update(updateData);
+
+    return res.status(200).json({ message: "Service declined successfully" });
+  } catch (error) {
+    console.error("Error declining service:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
 
 //Home page
@@ -368,4 +477,6 @@ module.exports = {
   getexpert,
   service,
   getlogs,
+  acceptService,
+  declineService,
 };

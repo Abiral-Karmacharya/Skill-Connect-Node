@@ -7,8 +7,6 @@ const expert = require("./expertmodel");
 const review = require("./reviewmodel");
 
 role.hasOne(user, { foreignKey: "RoleID" });
-servicename.hasOne(service, { foreignKey: "ServiceNameID" });
-servicedescription.hasOne(service, { foreignKey: "ServiceDescriptionID" });
 user.hasOne(service, { foreignKey: "UserID" });
 user.hasOne(expert, { foreignKey: "UserID" });
 expert.hasOne(service, { foreignKey: "ExpertID" });
