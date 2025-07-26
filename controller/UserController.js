@@ -349,12 +349,16 @@ const getlogs = async (req, res) => {
       }
     } else if (userRoleID === 2) {
       // User is a CLIENT (RoleID = 2)
+
       services = await Service.findAll({
         where: { UserID: userId },
       });
 
       for (const service of services) {
         const expert = await Expert.findByPk(service.ExpertID);
+        const expert1 = await User.findOne({
+          where: { UserID: expert.UserID },
+        });
         let expertUser = null;
 
         if (expert) {
@@ -372,6 +376,8 @@ const getlogs = async (req, res) => {
           createdAt: service.CreatedDate,
           Name: expertUser ? expertUser.Name : "Unassigned Expert",
           userType: "client",
+          Email: expert1.Email,
+          PhoneNumber: expert1.PhoneNumber,
         });
       }
     } else if (userRoleID === 1) {
