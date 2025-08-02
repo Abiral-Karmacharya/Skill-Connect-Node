@@ -21,6 +21,7 @@ const reviewmodel = sequelize.define(
     CreatedDate: {
       type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   },
   {

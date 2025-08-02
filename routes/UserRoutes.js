@@ -13,6 +13,9 @@ const {
   service,
   acceptService,
   declineService,
+  completeService,
+  submitReview,
+  getReviews,
 } = require("../controller/UserController");
 const authguard = require("../middleware/authGuard");
 const isadmin = require("../middleware/isAdmin");
@@ -30,6 +33,9 @@ router.post("/service", authguard, service);
 router.get("/getlogs", authguard, getlogs);
 router.put("/acceptservice/:serviceId", authguard, acceptService);
 router.put("/declineservice/:serviceId", authguard, declineService);
+router.put("/completeservice/:serviceId", authguard, completeService);
+router.post("/submitreview", authguard, submitReview);
+router.get("/getreviews/:serviceId", authguard, getReviews);
 // // Expert actions
 // router.put("/service/:serviceId/accept", authguard, acceptService);
 // router.put("/service/:serviceId/decline", authguard, declineService);

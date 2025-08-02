@@ -5,6 +5,7 @@ const User = require("../model/usermodel");
 const Role = require("../model/rolemodel");
 const Expert = require("../model/expertmodel");
 const Service = require("../model/servicemodel");
+const Review = require("../model/reviewmodel");
 // const expert = require("../model/expertmodel");
 // For signup
 const createuser = async (req, res) => {
@@ -466,6 +467,244 @@ const declineService = async (req, res) => {
   }
 };
 
+const completeService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    // Update status to declined
+    const updateData = { Status: "completed" };
+
+    await service.update(updateData);
+
+    return res.status(200).json({ message: "Service completed successfully" });
+  } catch (error) {
+    console.error("Error completing service:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Add these review controller functions to your existing userController.js
+
+const submitReview = async (req, res) => {
+  try {
+    const { serviceId, rating, comment } = req.body;
+    const userId = req.user.id; // From your auth middleware
+
+    // Validate required fields
+    if (!serviceId || !rating || !comment) {
+      return res.status(400).json({
+        message:
+          "All fields are required: serviceId, expertId, rating, comment",
+      });
+    }
+
+    // Validate rating range
+    if (rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
+    // Check if service exists and is completed
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    if (service.Status !== "completed") {
+      return res.status(400).json({
+        message: "Service must be completed before reviewing",
+      });
+    }
+
+    // Check if user has already reviewed this service
+    const existingReview = await Review.findOne({
+      where: {
+        ServiceID: serviceId,
+        UserID: userId,
+      },
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        message: "You have already reviewed this service",
+      });
+    }
+
+    const expert = await Expert.findByPk(service.ExpertID);
+    if (!expert) {
+      return res
+        .status(404)
+        .json({ message: "Expert not found for this service" });
+    }
+    // Find the expert's UserID from the expertId (which might be ExpertID)
+    let expertUserId = expert.ExpertID;
+    console.log(expertUserId);
+
+    // Create new review
+    const newReview = await Review.create({
+      ServiceID: serviceId,
+      UserID: userId,
+      Rating: rating,
+      Comment: comment.trim(),
+    });
+
+    // Update expert's average rating
+    await updateExpertRating(expertUserId);
+
+    res.status(201).json({
+      message: "Review submitted successfully",
+      review: newReview,
+    });
+  } catch (error) {
+    console.error("Error submitting review:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getReviews = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+
+    const reviews = await Review.findAll({
+      where: { ServiceID: serviceId },
+      order: [["createdDate", "DESC"]],
+    });
+
+    // If the association isn't set up, fetch user data manually
+    const formattedReviews = [];
+    for (const review of reviews) {
+      const reviewer = await User.findByPk(review.UserID);
+      formattedReviews.push({
+        ReviewID: review.ReviewID,
+        ServiceID: review.ServiceID,
+        Rating: review.Rating,
+        Comment: review.Comment,
+        createdAt: review.createdAt,
+        ReviewerName: reviewer ? reviewer.Name : "Unknown User",
+        ReviewerEmail: reviewer ? reviewer.Email : "Unknown Email",
+      });
+    }
+
+    res.status(200).json(formattedReviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getExpertReviews = async (req, res) => {
+  try {
+    const { expertId } = req.params;
+
+    // Find all reviews for this expert
+    const reviews = await Review.findAll({
+      where: { ExpertID: expertId },
+      order: [["createdAt", "DESC"]],
+    });
+
+    const formattedReviews = [];
+    let totalRating = 0;
+
+    for (const review of reviews) {
+      const reviewer = await User.findByPk(review.UserID);
+      const service = await Service.findByPk(review.ServiceID);
+
+      totalRating += review.Rating;
+
+      formattedReviews.push({
+        ReviewID: review.ReviewID,
+        ServiceID: review.ServiceID,
+        Rating: review.Rating,
+        Comment: review.Comment,
+        createdAt: review.createdAt,
+        ReviewerName: reviewer ? reviewer.Name : "Unknown User",
+        ServiceTitle: service ? service.Title : "Unknown Service",
+        ServiceDescription: service ? service.Description : "No description",
+      });
+    }
+
+    const averageRating =
+      reviews.length > 0 ? (totalRating / reviews.length).toFixed(2) : 0;
+
+    res.status(200).json({
+      reviews: formattedReviews,
+      averageRating: parseFloat(averageRating),
+      totalReviews: reviews.length,
+    });
+  } catch (error) {
+    console.error("Error fetching expert reviews:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Helper function to update expert's average rating
+const updateExpertRating = async (expertUserId) => {
+  try {
+    // Calculate average rating for this expert
+    const reviews = await Review.findAll({
+      where: { ExpertID: expertUserId },
+    });
+
+    if (reviews.length > 0) {
+      const totalRating = reviews.reduce(
+        (sum, review) => sum + review.Rating,
+        0
+      );
+      const averageRating = (totalRating / reviews.length).toFixed(2);
+
+      // Update the expert's user record
+      await User.update(
+        {
+          AverageRating: parseFloat(averageRating),
+          TotalReviews: reviews.length,
+        },
+        { where: { UserID: expertUserId } }
+      );
+    }
+  } catch (error) {
+    console.error("Error updating expert rating:", error);
+  }
+};
+
+// Get user's own reviews (reviews they've written)
+const getUserReviews = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const reviews = await Review.findAll({
+      where: { UserID: userId },
+      order: [["createdAt", "DESC"]],
+    });
+
+    const formattedReviews = [];
+
+    for (const review of reviews) {
+      const service = await Service.findByPk(review.ServiceID);
+      const expert = await User.findByPk(review.ExpertID);
+
+      formattedReviews.push({
+        ReviewID: review.ReviewID,
+        ServiceID: review.ServiceID,
+        Rating: review.Rating,
+        Comment: review.Comment,
+        createdAt: review.createdAt,
+        ExpertName: expert ? expert.Name : "Unknown Expert",
+        ServiceTitle: service ? service.Title : "Unknown Service",
+      });
+    }
+
+    res.status(200).json(formattedReviews);
+  } catch (error) {
+    console.error("Error fetching user reviews:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 //Home page
 const mainpage = (req, res) => {
   res.send("This is the main page");
@@ -485,4 +724,10 @@ module.exports = {
   getlogs,
   acceptService,
   declineService,
+  completeService,
+  submitReview, // New
+  getReviews, // New
+  getExpertReviews, // New
+  getUserReviews, // New
+  updateExpertRating, // New helper function
 };
