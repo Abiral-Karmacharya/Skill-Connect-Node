@@ -36,7 +36,9 @@ const createuser = async (req, res) => {
         UserID: UserId.UserID,
       });
     }
-    return res.status(201).json({ success: "User created", users: newUser });
+    return res
+      .status(201)
+      .json({ success: true, message: "user created", newuser: newUser });
   } catch (error) {
     return res.status(400).json({ error: error });
   }
@@ -118,9 +120,10 @@ const getuser = async (req, res) => {
 };
 
 const updateuser = async (req, res) => {
-  console.log("hi");
+  console.log(req.body);
   try {
-    const userId = req.user.id; // Extracted from authguard middleware
+    // const userId = req.user.id; // Extracted from authguard middleware
+    const userId = req.user.id;
 
     const {
       name,
@@ -166,7 +169,8 @@ const updateuser = async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      message: "Profile updated successfully",
+      success: true,
+      message: "Updated successfully",
       user: {
         Name: user.Name,
         Email: user.Email,
@@ -196,7 +200,7 @@ const deleteuser = async (req, res) => {
       where: { UserID: userId },
     });
 
-    return res.status(200).json({ message: "User deleted" });
+    return res.status(200).json({ success: true, message: "User deleted" });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }
@@ -226,13 +230,14 @@ const getexpert = async (req, res) => {
 };
 
 const service = async (req, res) => {
+  console.log(req.body);
   try {
     const {
       expertId,
       projectTitle,
       projectDescription,
-      budget,
       deadline,
+      budget,
       requirements,
     } = req.body;
 
@@ -243,72 +248,32 @@ const service = async (req, res) => {
     });
 
     const userExpertId = expert.ExpertID;
-    const userId = parseInt(req.user.id);
-    // userid = userExpertId
-    // expertid = expertId
+    // const userId = parseInt(req.user.id);
+    const userId = 23;
 
     const services = await Service.create({
       Title: projectTitle,
       Description: projectDescription,
       Requirements: requirements,
-      Deadline: deadline,
       Price: budget,
+      // Deadline: deadline,
       UserID: parseInt(userId),
       ExpertID: parseInt(userExpertId),
     });
     if (services) {
-      return res.status(200).json({ message: "Service created" });
+      return res
+        .status(200)
+        .json({ success: true, message: "Service created" });
     }
+    console.log(services);
   } catch (error) {
     return res.status(500).json(error);
   }
 };
 
 const getlogs = async (req, res) => {
-  // try {
-  //   const userId = req.user.id;
-  //   const services = await Service.findAll({ where: { UserID: userId } });
-  //   const user = await User.findByPk(userId);
-  //   console.log(services);
-  //   const usertype = user.RoleID;
-  //   const formattedServices = [];
-  //   for (const service of services) {
-  //     const expert = await Expert.findByPk(service.ExpertID);
-  //     const user = await User.findByPk(expert.UserID);
-
-  //     if (expert) {
-  //       formattedServices.push({
-  //         ServiceID: service.ServiceID,
-  //         Title: service.Title,
-  //         Description: service.Description,
-  //         Requirements: service.Requirements,
-  //         Deadline: service.Deadline,
-  //         Price: service.Price,
-  //         status: service.Status,
-  //         createdAt: service.CreatedDate,
-  //         Name: user.Name, // Include the expert's name
-  //         userType: usertype === 3 ? "expert" : "user",
-  //       });
-  //     } else {
-  //       // If the user is not found, you can handle it as needed
-  //       formattedServices.push({
-  //         ServiceID: service.ServiceID,
-  //         Title: service.Title,
-  //         Description: service.Description,
-  //         Requirements: service.Requirements,
-  //         Deadline: service.Deadline,
-  //         Price: service.Price,
-  //         Name: null, // Or handle it differently if needed
-  //       });
-  //     }
-  //   }
-
-  //   return res.json(formattedServices);
-  // } catch (error) {
-  //   return res.status(500).json({ message: "Server error" });
-  // }
-
   try {
+    // const userId = req.user.id
     const userId = req.user.id;
     const currentUser = await User.findByPk(userId);
 
@@ -408,7 +373,11 @@ const getlogs = async (req, res) => {
     }
 
     // Return just the array like before (compatible with existing frontend)
-    return res.json(formattedServices);
+    return res.json({
+      success: true,
+      formattedServices,
+      message: "Logs retrieved",
+    });
   } catch (error) {
     console.error("Error in getlogs:", error);
     return res.status(500).json({

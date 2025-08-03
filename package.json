@@ -4,7 +4,7 @@
   "description": "Skill connect backend",
   "main": "index.js",
   "scripts": {
-    "test": "console.log(\"completed\")",
+    "test": "jest",
     "start": "nodemon"
   },
   "author": "",
@@ -18,5 +18,9 @@
     "mysql2": "^3.14.1",
     "nodemon": "^3.1.10",
     "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "supertest": "^7.1.4"
   }
 }

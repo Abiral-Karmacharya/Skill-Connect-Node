@@ -82,6 +82,7 @@ const service = sequelize.define(
     Deadline: {
       type: DataTypes.DATE,
       allowNull: true,
+      defaultValue: DataTypes.NOW,
     },
     Price: {
       type: DataTypes.DECIMAL(10, 2),
