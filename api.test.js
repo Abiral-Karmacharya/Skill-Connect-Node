@@ -13,11 +13,11 @@ const BASE_URL = `http://localhost:${process.env.PORT || 8001}`;
 //   it("Should create a new user", async () => {
 //     const res = await request(BASE_URL)
 //       .post("/user/signup")
-//       .set("Content-Type", "application/json") // optional, Supertest sets it automatically with .send()
+//       .set("Content-Type", "application/json")
 //       .send({
-//         name: "user3", // use lowercase keys as your controller expects
-//         email: "user3@gmail.com",
-//         password: "user3",
+//         name: uniqueUserName,
+//         email: uniqueEmail,
+//         password: "user1",
 //         role: "user",
 //       });
 
@@ -28,7 +28,7 @@ const BASE_URL = `http://localhost:${process.env.PORT || 8001}`;
 //     expect(res.body.newuser.Name).toEqual(uniqueUserName);
 //     expect(res.body.newuser.Email).toEqual(uniqueEmail);
 //   });
-// });
+
 //   it("Should login to user", async () => {
 //     const res = await request(BASE_URL)
 //       .post("/user/login")
@@ -47,24 +47,14 @@ const BASE_URL = `http://localhost:${process.env.PORT || 8001}`;
 //       .put("/user/updateuser")
 //       .set("Content-Type", "application/json")
 //       .send({
-//         name: uniqueUserName,
-//         email: uniqueEmail,
+//         name: "user3",
+//         email: "user3",
 //         password: "user1",
 //       });
 //     console.log(res.body);
 //     expect(res.body.success).toBe(true);
 //     expect(res.body.message).toEqual("Updated successfully");
 //   });
-
-//   // it("delete user", async () => {
-//   //   const res = await request(BASE_URL)
-//   //     .delete("/user/deleteuser")
-//   //     .set("Content-Type", "application/json");
-
-//   //   console.log(res.body);
-//   //   expect(res.body.success).toBe(true);
-//   //   expect(res.body.message).toEqual("User deleted");
-//   // });
 
 //   it("should get info about service", async () => {
 //     const res = await request(BASE_URL)
@@ -91,13 +81,22 @@ const BASE_URL = `http://localhost:${process.env.PORT || 8001}`;
 //     expect(res.body.success).toBe(true);
 //     expect(res.body.message).toEqual("Logs retrieved");
 //   });
+//   it("delete user", async () => {
+//     const res = await request(BASE_URL)
+//       .delete("/user/deleteuser")
+//       .set("Content-Type", "application/json");
+
+//     console.log(res.body);
+//     expect(res.body.success).toBe(true);
+//     expect(res.body.message).toEqual("User deleted");
+//   });
 // });
 
 describe("open API test with middleware", () => {
   let authToken = "";
   const userCredentials = {
-    email: "user3@gmail.com",
-    password: "user3",
+    email: "noimage1754318285522@gmail.com",
+    password: "user1",
   };
 
   beforeAll(async () => {
@@ -108,24 +107,8 @@ describe("open API test with middleware", () => {
 
     authToken = loginRes.body.token;
   });
-  console.log("auth token", authToken);
 
-  it("should update user", async () => {
-    const res = await request(BASE_URL)
-      .put("/user/updateuser")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "user3",
-        email: "user3@gmail.com",
-        password: "user3",
-      });
-
-    console.log(res.body);
-    expect(res.body.success).toBe(true);
-    expect(res.body.message).toEqual("Updated successfully");
-  });
-
-  it("should get user", async () => {
+  it("should get selected user", async () => {
     const res = await request(BASE_URL)
       .get("/user/getuser")
       .set("Authorization", `Bearer ${authToken}`);
@@ -135,21 +118,46 @@ describe("open API test with middleware", () => {
     expect(res.body.message).toEqual("User found");
   });
 
+  it("should get all users", async () => {
+    const res = await request(BASE_URL)
+      .get("/user/getallusers")
+      .set("Authorization", `Bearer ${authToken}`);
+
+    console.log(res.body);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toEqual("Users found");
+  });
+
+  it("should update user", async () => {
+    const res = await request(BASE_URL)
+      .put("/user/updateuser")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "testuser1754318285522",
+        email: "noimage1754318285522@gmail.com",
+        password: "user1  ",
+      });
+
+    console.log(res.body);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toEqual("Updated successfully");
+  });
+
   it("should get service", async () => {
     const res = await request(BASE_URL)
       .post("/user/service")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
+        expertId: 25,
         projectTitle: "project 1",
         projectDescription: "project 1",
-        Requirements: "Project 1",
-        budget: 10000,
-        expertId: 1,
+        budget: 1234,
+        requirements: "hi",
       });
 
     console.log(res.body);
     expect(res.body.success).toBe(true);
-    expect(res.body.message).toEqual("User found");
+    expect(res.body.message).toEqual("Service created");
   });
 
   it("should get info about logs", async () => {
@@ -160,5 +168,15 @@ describe("open API test with middleware", () => {
     console.log(res.body);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toEqual("Logs retrieved");
+  });
+
+  it("should delete the user", async () => {
+    const res = await request(BASE_URL)
+      .delete("/user/deleteuser")
+      .set("Authorization", `Bearer ${authToken}`);
+
+    console.log(res.body);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toEqual("User deleted");
   });
 });

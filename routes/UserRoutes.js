@@ -23,12 +23,12 @@ const isadmin = require("../middleware/isAdmin");
 router.post("/signup", createuser); // route for signup
 router.post("/login", loginpage); // route for login
 router.get("/home", mainpage); // route for home page
-router.post("/getallusers", getallusers); //route for getting all users
+router.get("/getallusers", authguard, getallusers); //route for getting all users
 router.get("/getuser", authguard, getuser); //route for getting id of one user
 router.put("/updateuser", authguard, updateuser); // route for updating user
 router.delete("/deleteuser", authguard, deleteuser); // route for deleting user
-router.get("/getexperts", getexperts);
-router.get("/getexpert/:id", getexpert);
+router.get("/getexperts", authguard, getexperts);
+router.get("/getexpert/:id", authguard, getexpert);
 router.post("/service", authguard, service);
 router.get("/getlogs", authguard, getlogs);
 router.put("/acceptservice/:serviceId", authguard, acceptService);

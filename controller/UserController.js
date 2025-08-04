@@ -85,11 +85,12 @@ const loginpage = async (req, res) => {
 const getallusers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: { exclude: ["password"] },
+      attributes: { exclude: ["Password"] },
     });
-    res.json({ success: true, users: users });
+    console.log("user", users);
+    return res.json({ success: true, users: users, message: "Users found" });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching users" });
+    return res.status(500).json({ error: "Error fetching users" });
   }
 };
 
@@ -126,8 +127,8 @@ const getuser = async (req, res) => {
 const updateuser = async (req, res) => {
   console.log(req.body);
   try {
-    // const userId = req.user.id; // Extracted from authguard middleware
     const userId = req.user.id;
+    // const userId = 31;
 
     const {
       name,
@@ -194,6 +195,7 @@ const updateuser = async (req, res) => {
 const deleteuser = async (req, res) => {
   try {
     const userId = req.user.id;
+    // const userId = 31;
     const user = await User.findByPk(userId);
 
     if (!user) {
@@ -246,6 +248,7 @@ const service = async (req, res) => {
     } = req.body;
 
     const userId = req.user.id;
+    // const userId = 31;
     const expert = await Expert.findOne({
       where: {
         UserID: expertId,
@@ -277,8 +280,8 @@ const service = async (req, res) => {
 
 const getlogs = async (req, res) => {
   try {
-    // const userId = req.user.id
     const userId = req.user.id;
+    // const userId = 31;
     const currentUser = await User.findByPk(userId);
 
     if (!currentUser) {
