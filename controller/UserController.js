@@ -113,7 +113,11 @@ const getuser = async (req, res) => {
     if (!user_select) {
       return res.status(404).json({ message: "User not found" });
     }
-    return res.json(user_select);
+    return res.json({
+      users: user_select,
+      message: "User found",
+      success: true,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }
@@ -241,6 +245,7 @@ const service = async (req, res) => {
       requirements,
     } = req.body;
 
+    const userId = req.user.id;
     const expert = await Expert.findOne({
       where: {
         UserID: expertId,
@@ -249,7 +254,6 @@ const service = async (req, res) => {
 
     const userExpertId = expert.ExpertID;
     // const userId = parseInt(req.user.id);
-    const userId = 23;
 
     const services = await Service.create({
       Title: projectTitle,
