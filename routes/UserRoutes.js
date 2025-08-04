@@ -27,7 +27,7 @@ router.get("/getallusers", authguard, getallusers); //route for getting all user
 router.get("/getuser", authguard, getuser); //route for getting id of one user
 router.put("/updateuser", authguard, updateuser); // route for updating user
 router.delete("/deleteuser", authguard, deleteuser); // route for deleting user
-router.get("/getexperts", authguard, getexperts);
+router.get("/getexperts", getexperts);
 router.get("/getexpert/:id", authguard, getexpert);
 router.post("/service", authguard, service);
 router.get("/getlogs", authguard, getlogs);
