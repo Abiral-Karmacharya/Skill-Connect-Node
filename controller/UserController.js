@@ -103,11 +103,9 @@ const getallusers = async (req, res) => {
 
 const getuser = async (req, res) => {
   try {
-    // The authenticateToken middleware should decode the JWT and add user info to req.user
-    const userId = req.user.id; // or req.user._id depending on your user model
+    const userId = req.user.id; 
 
-    // Fetch only the current user's data
-    const user_select = await User.findByPk(userId); // Exclude password
+    const user_select = await User.findByPk(userId); 
     if (!user_select) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -154,7 +152,6 @@ const updateuser = async (req, res) => {
       user.Password = await bcrypt.hash(newPassword, salt);
     }
 
-    // Update only changed fields
     if (name && name !== user.Name) user.Name = name;
     if (email && email !== user.Email) user.Email = email;
     if (bio && bio !== user.Bio) user.Bio = bio;
@@ -265,49 +262,6 @@ const service = async (req, res) => {
 };
 
 const getlogs = async (req, res) => {
-  // try {
-  //   const userId = req.user.id;
-  //   const services = await Service.findAll({ where: { UserID: userId } });
-  //   const user = await User.findByPk(userId);
-  //   console.log(services);
-  //   const usertype = user.RoleID;
-  //   const formattedServices = [];
-  //   for (const service of services) {
-  //     const expert = await Expert.findByPk(service.ExpertID);
-  //     const user = await User.findByPk(expert.UserID);
-
-  //     if (expert) {
-  //       formattedServices.push({
-  //         ServiceID: service.ServiceID,
-  //         Title: service.Title,
-  //         Description: service.Description,
-  //         Requirements: service.Requirements,
-  //         Deadline: service.Deadline,
-  //         Price: service.Price,
-  //         status: service.Status,
-  //         createdAt: service.CreatedDate,
-  //         Name: user.Name, // Include the expert's name
-  //         userType: usertype === 3 ? "expert" : "user",
-  //       });
-  //     } else {
-  //       // If the user is not found, you can handle it as needed
-  //       formattedServices.push({
-  //         ServiceID: service.ServiceID,
-  //         Title: service.Title,
-  //         Description: service.Description,
-  //         Requirements: service.Requirements,
-  //         Deadline: service.Deadline,
-  //         Price: service.Price,
-  //         Name: null, // Or handle it differently if needed
-  //       });
-  //     }
-  //   }
-
-  //   return res.json(formattedServices);
-  // } catch (error) {
-  //   return res.status(500).json({ message: "Server error" });
-  // }
-
   try {
     const userId = req.user.id;
     const currentUser = await User.findByPk(userId);
@@ -397,7 +351,7 @@ const getlogs = async (req, res) => {
           Price: service.Price,
           status: service.Status,
           createdAt: service.CreatedDate,
-          Name: client ? client.Name : "Unknown Client", // For consistency with existing frontend
+          Name: client ? client.Name : "Unknown Client", 
           ExpertName: expertUser ? expertUser.Name : "Unassigned Expert",
           ClientName: client ? client.Name : "Unknown Client",
           userType: "admin",
@@ -407,7 +361,6 @@ const getlogs = async (req, res) => {
       return res.status(403).json({ message: "Invalid user role" });
     }
 
-    // Return just the array like before (compatible with existing frontend)
     return res.json(formattedServices);
   } catch (error) {
     console.error("Error in getlogs:", error);
