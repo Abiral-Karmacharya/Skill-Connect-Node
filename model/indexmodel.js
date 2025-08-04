@@ -17,7 +17,5 @@ module.exports = {
   user,
   role,
   service,
-  servicename,
-  servicedescription,
   expert,
 };
