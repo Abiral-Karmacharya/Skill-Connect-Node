@@ -248,10 +248,6 @@ For detailed API documentation with request/response examples, visit:
 - Review system
 - Expert dashboard
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 👨‍💻 Author
 
 **Abiral Karmacharya**
