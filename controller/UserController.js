@@ -106,11 +106,9 @@ const getallusers = async (req, res) => {
 
 const getuser = async (req, res) => {
   try {
-    // The authenticateToken middleware should decode the JWT and add user info to req.user
-    const userId = req.user.id; // or req.user._id depending on your user model
+    const userId = req.user.id;
 
-    // Fetch only the current user's data
-    const user_select = await User.findByPk(userId); // Exclude password
+    const user_select = await User.findByPk(userId);
     if (!user_select) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -162,7 +160,6 @@ const updateuser = async (req, res) => {
       user.Password = await bcrypt.hash(newPassword, salt);
     }
 
-    // Update only changed fields
     if (name && name !== user.Name) user.Name = name;
     if (email && email !== user.Email) user.Email = email;
     if (bio && bio !== user.Bio) user.Bio = bio;
@@ -369,7 +366,7 @@ const getlogs = async (req, res) => {
           Price: service.Price,
           status: service.Status,
           createdAt: service.CreatedDate,
-          Name: client ? client.Name : "Unknown Client", // For consistency with existing frontend
+          Name: client ? client.Name : "Unknown Client",
           ExpertName: expertUser ? expertUser.Name : "Unassigned Expert",
           ClientName: client ? client.Name : "Unknown Client",
           userType: "admin",
@@ -380,11 +377,7 @@ const getlogs = async (req, res) => {
     }
 
     // Return just the array like before (compatible with existing frontend)
-    return res.json({
-      success: true,
-      formattedServices,
-      message: "Logs retrieved",
-    });
+    return res.json(formattedServices);
   } catch (error) {
     console.error("Error in getlogs:", error);
     return res.status(500).json({
@@ -437,6 +430,24 @@ const declineService = async (req, res) => {
   }
 };
 
+const cancelService = async (req, res) => {
+  try {
+    const { serviceId } = req.params;
+    const service = await Service.findByPk(serviceId);
+    console.log(serviceId);
+    if (!service) {
+      return res.status(404).json({
+        message: "Service not found",
+      });
+    }
+    const canceldata = { Status: "cancelled" };
+
+    await service.update(canceldata);
+    return res.status(200).json({ message: "Service cancelled" });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 const completeService = async (req, res) => {
   try {
     const { serviceId } = req.params;
@@ -568,113 +579,6 @@ const getReviews = async (req, res) => {
   }
 };
 
-const getExpertReviews = async (req, res) => {
-  try {
-    const { expertId } = req.params;
-
-    // Find all reviews for this expert
-    const reviews = await Review.findAll({
-      where: { ExpertID: expertId },
-      order: [["createdAt", "DESC"]],
-    });
-
-    const formattedReviews = [];
-    let totalRating = 0;
-
-    for (const review of reviews) {
-      const reviewer = await User.findByPk(review.UserID);
-      const service = await Service.findByPk(review.ServiceID);
-
-      totalRating += review.Rating;
-
-      formattedReviews.push({
-        ReviewID: review.ReviewID,
-        ServiceID: review.ServiceID,
-        Rating: review.Rating,
-        Comment: review.Comment,
-        createdAt: review.createdAt,
-        ReviewerName: reviewer ? reviewer.Name : "Unknown User",
-        ServiceTitle: service ? service.Title : "Unknown Service",
-        ServiceDescription: service ? service.Description : "No description",
-      });
-    }
-
-    const averageRating =
-      reviews.length > 0 ? (totalRating / reviews.length).toFixed(2) : 0;
-
-    res.status(200).json({
-      reviews: formattedReviews,
-      averageRating: parseFloat(averageRating),
-      totalReviews: reviews.length,
-    });
-  } catch (error) {
-    console.error("Error fetching expert reviews:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// Helper function to update expert's average rating
-const updateExpertRating = async (expertUserId) => {
-  try {
-    // Calculate average rating for this expert
-    const reviews = await Review.findAll({
-      where: { ExpertID: expertUserId },
-    });
-
-    if (reviews.length > 0) {
-      const totalRating = reviews.reduce(
-        (sum, review) => sum + review.Rating,
-        0
-      );
-      const averageRating = (totalRating / reviews.length).toFixed(2);
-
-      // Update the expert's user record
-      await User.update(
-        {
-          AverageRating: parseFloat(averageRating),
-          TotalReviews: reviews.length,
-        },
-        { where: { UserID: expertUserId } }
-      );
-    }
-  } catch (error) {
-    console.error("Error updating expert rating:", error);
-  }
-};
-
-// Get user's own reviews (reviews they've written)
-const getUserReviews = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const reviews = await Review.findAll({
-      where: { UserID: userId },
-      order: [["createdAt", "DESC"]],
-    });
-
-    const formattedReviews = [];
-
-    for (const review of reviews) {
-      const service = await Service.findByPk(review.ServiceID);
-      const expert = await User.findByPk(review.ExpertID);
-
-      formattedReviews.push({
-        ReviewID: review.ReviewID,
-        ServiceID: review.ServiceID,
-        Rating: review.Rating,
-        Comment: review.Comment,
-        createdAt: review.createdAt,
-        ExpertName: expert ? expert.Name : "Unknown Expert",
-        ServiceTitle: service ? service.Title : "Unknown Service",
-      });
-    }
-
-    res.status(200).json(formattedReviews);
-  } catch (error) {
-    console.error("Error fetching user reviews:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 //Home page
 const mainpage = (req, res) => {
   res.send("This is the main page");
@@ -695,9 +599,7 @@ module.exports = {
   acceptService,
   declineService,
   completeService,
-  submitReview, // New
-  getReviews, // New
-  getExpertReviews, // New
-  getUserReviews, // New
-  updateExpertRating, // New helper function
+  cancelService,
+  submitReview,
+  getReviews,
 };

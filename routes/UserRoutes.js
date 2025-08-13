@@ -14,6 +14,7 @@ const {
   acceptService,
   declineService,
   completeService,
+  cancelService,
   submitReview,
   getReviews,
 } = require("../controller/UserController");
@@ -34,12 +35,8 @@ router.get("/getlogs", authguard, getlogs);
 router.put("/acceptservice/:serviceId", authguard, acceptService);
 router.put("/declineservice/:serviceId", authguard, declineService);
 router.put("/completeservice/:serviceId", authguard, completeService);
+router.put("/cancelledservice/:serviceId", authguard, cancelService);
 router.post("/submitreview", authguard, submitReview);
 router.get("/getreviews/:serviceId", authguard, getReviews);
-// // Expert actions
-// router.put("/service/:serviceId/accept", authguard, acceptService);
-// router.put("/service/:serviceId/decline", authguard, declineService);
 
-// // Client actions
-// router.put("/service/:serviceId/cancel", authguard, cancelService);
 module.exports = router;
