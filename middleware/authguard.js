@@ -4,7 +4,6 @@ const JWT_SECRET = process.env.JWT_TOKEN;
 const authGuard = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log(authHeader);
     return res
       .status(401)
       .json({ success: false, message: "Authentication token missing" });
